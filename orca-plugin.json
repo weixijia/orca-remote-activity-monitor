@@ -1,0 +1,62 @@
+{
+  "manifestVersion": 2,
+  "id": "remote-activity-monitor",
+  "name": "Remote Activity Monitor",
+  "version": "0.1.0",
+  "execution": "trusted-worker",
+  "description": "Live CPU cores, memory, network, disk, GPU and processes of a remote Linux machine over SSH, in Orca's sidebar. A fork of Activity Monitor for paired servers and SSH boxes.",
+  "license": "MIT",
+  "repository": "https://github.com/weixijia/orca-remote-activity-monitor",
+  "engines": {
+    "orca": ">=1.4.248"
+  },
+  "pluginApi": 1,
+  "main": "src/worker.ts",
+  "contributes": {
+    "panels": [
+      {
+        "id": "remote-activity-monitor",
+        "title": "Remote Activity Monitor",
+        "icon": "gauge",
+        "entry": "panel/index.html"
+      }
+    ],
+    "statusBarItems": [
+      {
+        "id": "health",
+        "text": "Critical",
+        "icon": "warning",
+        "tone": "danger",
+        "tooltip": "Remote Activity Monitor: memory on the remote host is critical"
+      }
+    ],
+    "settings": [
+      {
+        "key": "host",
+        "title": "SSH host",
+        "description": "Host to monitor, as you would type it after `ssh`: an alias from ~/.ssh/config or user@hostname. Key-based login is required; the host needs Linux and python3.",
+        "type": "string",
+        "default": "",
+        "maxLength": 255,
+        "placeholder": "my-server"
+      }
+    ]
+  },
+  "capabilities": [
+    {
+      "kind": "notifications:show"
+    },
+    {
+      "kind": "agent:read"
+    },
+    {
+      "kind": "terminal:send"
+    },
+    {
+      "kind": "storage:own"
+    },
+    {
+      "kind": "settings:own"
+    }
+  ]
+}
