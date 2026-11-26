@@ -7,7 +7,7 @@ import { createMac } from './mac.ts'
 import { createWindows } from './windows.ts'
 import { createHistory, RAW_MS } from './history.ts'
 import { createHealth, culpritOf, topSuspects, type Alert } from './health.ts'
-import { coreLayout, coreLoads, rate, type Core, type CpuTimes, type Memory, type Proc } from './parse.ts'
+import { coreLayout, coreLoads, rate, type Core, type CpuTimes, type Gpu, type Memory, type Proc } from './parse.ts'
 
 export type Point = {
   seq: number
@@ -20,6 +20,8 @@ export type Point = {
   read: number
   write: number
   gpu: number
+  // Per-card utilization when the host has several GPUs (NVIDIA only).
+  gpus?: number[]
 }
 
 export type Sample = {
@@ -58,7 +60,7 @@ export type Sample = {
     readOpsRate: number | null
     writeOpsRate: number | null
   } | null
-  gpu: { utilization: number; model: string } | null
+  gpu: Gpu | null
   note: string | null
   split: { user: number; system: number; idle: number } | null
   counts: { procs: number | null; threads: number | null }
@@ -212,7 +214,8 @@ export function createSampler(options: SamplerOptions = {}) {
       up: net?.up ?? 0,
       read: disk?.read ?? 0,
       write: disk?.write ?? 0,
-      gpu: raw.gpu?.utilization ?? 0
+      gpu: raw.gpu?.utilization ?? 0,
+      gpus: raw.gpu?.devices && raw.gpu.devices.length > 1 ? raw.gpu.devices.map((g) => g.utilization) : []
     })
     return sample
   }

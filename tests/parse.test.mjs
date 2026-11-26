@@ -117,3 +117,15 @@ test('a counter that went backwards gives no rate', () => {
   assert.equal(rate(3000, 1000, 2), null)
   assert.equal(rate(undefined, 1000, 2), null)
 })
+
+test('parseNvidiaSmi reads each card with memory, temperature and power, and averages utilization', async () => {
+  const { parseNvidiaSmi } = await import('../src/parse.ts')
+  const gpu = parseNvidiaSmi('93, 11869, 24564, 81, 405.29, NVIDIA GeForce RTX 4090\n86, 12377, 24564, 66, [N/A], NVIDIA GeForce RTX 4090\n')
+  assert.equal(gpu.utilization, 89.5)
+  assert.equal(gpu.model, '2× NVIDIA GeForce RTX 4090')
+  assert.deepEqual(gpu.devices[0], { index: 0, utilization: 93, model: 'NVIDIA GeForce RTX 4090', memUsed: 11869 * 1024 ** 2, memTotal: 24564 * 1024 ** 2, temp: 81, power: 405.29 })
+  assert.equal(gpu.devices[1].power, null)
+  assert.equal(parseNvidiaSmi('50, 1000, 8000, 60, 100, A\n10, 1000, 8000, 60, 100, B\n').model, 'A + B')
+  assert.equal(parseNvidiaSmi('35, NVIDIA GeForce RTX 3080\n').model, 'NVIDIA GeForce RTX 3080')
+  assert.equal(parseNvidiaSmi('NVIDIA-SMI has failed\n'), null)
+})

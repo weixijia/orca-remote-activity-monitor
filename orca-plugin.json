@@ -2,9 +2,9 @@
   "manifestVersion": 2,
   "id": "remote-activity-monitor",
   "name": "Remote Activity Monitor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "execution": "trusted-worker",
-  "description": "Live CPU cores, memory, network, disk, GPU and processes of a remote Linux machine over SSH, in Orca's sidebar. A fork of Activity Monitor for paired servers and SSH boxes.",
+  "description": "Live CPU cores, memory, network, disk, per-card GPUs and processes of a remote Linux machine over SSH, in Orca's sidebar. A fork of Activity Monitor for paired servers and SSH boxes.",
   "license": "MIT",
   "repository": "https://github.com/weixijia/orca-remote-activity-monitor",
   "engines": {

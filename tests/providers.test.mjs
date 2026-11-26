@@ -121,7 +121,10 @@ test('Linux GPU comes from nvidia-smi off the sample path', async () => {
   const linux = createLinux(fakeDeps(files, { 'nvidia-smi': '35, NVIDIA GeForce RTX 3080\n45, NVIDIA GeForce RTX 3080\n' }))
   assert.equal((await linux.read()).gpu, null)
   await sleep(20)
-  assert.deepEqual((await linux.read()).gpu, { utilization: 40, model: 'NVIDIA GeForce RTX 3080' })
+  const gpu = (await linux.read()).gpu
+  assert.equal(gpu.utilization, 40)
+  assert.equal(gpu.model, '2× NVIDIA GeForce RTX 3080')
+  assert.deepEqual(gpu.devices.map((g) => [g.index, g.utilization, g.memTotal]), [[0, 35, null], [1, 45, null]])
 })
 
 test('Linux does not wake a sleeping NVIDIA GPU to ask how busy it is', async () => {

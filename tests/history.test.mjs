@@ -68,3 +68,15 @@ test('100ms points for 20 minutes still cover at least 14.5 minutes of a 15 minu
   assert.ok(points.length <= 600)
   assert.ok(now() - points[0].at >= 14.5 * MIN)
 })
+
+test('per-GPU series are averaged per card like cores, and missing ones stay empty', () => {
+  let now = 1_700_000_000_000
+  const history = createHistory(() => now)
+  for (let seq = 1; seq <= 1200; seq++) {
+    now += 1000
+    history.push({ seq, at: now, total: 0, cores: [], mem: 0, down: 0, up: 0, read: 0, write: 0, gpu: 60, gpus: [80, 40] })
+  }
+  for (const p of history.window(3600, 600)) assert.deepEqual(p.gpus, [80, 40])
+  history.push({ seq: 1201, at: now + 1000, total: 0, cores: [], mem: 0, down: 0, up: 0, read: 0, write: 0, gpu: 0 })
+  assert.deepEqual(history.since(1200).at(-1).gpus, undefined)
+})

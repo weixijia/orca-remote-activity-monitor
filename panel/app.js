@@ -52,7 +52,7 @@
   function ts() { return TEXT_SCALE[prefs.text] }
   if (prefs.open !== 'last') prefs.tab = prefs.open
 
-  var data = { boot: null, sample: null, health: null, procs: null, seq: 0, at: 0, windowed: false, tot: [], mem: [], down: [], up: [], gpu: [], dr: [], dw: [], bat: [], core: [], norms: {} }
+  var data = { boot: null, sample: null, health: null, procs: null, seq: 0, at: 0, windowed: false, tot: [], mem: [], down: [], up: [], gpu: [], dr: [], dw: [], bat: [], core: [], gpus: [], norms: {} }
   var view = {
     paused: false, settings: false, sort: prefs.sort, query: '', ask: null, askMsg: '', stuck: false, gone: {}, error: '', busy: false,
     menu: null, colMenu: null, heroMenu: null, open: null, unselect: null, copied: null, holding: false, sel: null, drag: null, dragged: false, fitted: [],
@@ -128,12 +128,14 @@
       return data.norms[src]
     }
     if (src.indexOf('core') === 0) return data.core[Number(src.slice(4))] || []
+    if (/^gpu\d+$/.test(src)) return data.gpus[Number(src.slice(3))] || []
     return data[src] || []
   }
 
   function reset() {
     ;['tot', 'mem', 'down', 'up', 'gpu', 'dr', 'dw'].forEach(function (k) { data[k] = [] })
     data.core = []
+    data.gpus = []
     data.seq = 0
   }
 
@@ -143,6 +145,7 @@
   function placeWindow(points, spanSec, now) {
     FIELDS.forEach(function (f) { data[f[0]] = blank() })
     data.core = []
+    data.gpus = []
     var spanMs = spanSec * 1000
     var start = now - spanMs
     var last = -1
@@ -153,6 +156,7 @@
       last = i
       FIELDS.forEach(function (f) { data[f[0]][i] = p[f[1]] })
       p.cores.forEach(function (v, c) { if (!data.core[c]) data.core[c] = blank(); data.core[c][i] = v })
+      ;(p.gpus || []).forEach(function (v, c) { if (!data.gpus[c]) data.gpus[c] = blank(); data.gpus[c][i] = v })
     })
   }
 
@@ -168,6 +172,7 @@
       if (p.seq <= data.seq) return
       FIELDS.forEach(function (f) { push(data[f[0]], p[f[1]]) })
       p.cores.forEach(function (v, i) { if (!data.core[i]) data.core[i] = []; push(data.core[i], v) })
+      ;(p.gpus || []).forEach(function (v, i) { if (!data.gpus[i]) data.gpus[i] = []; push(data.gpus[i], v) })
       data.seq = p.seq
     })
     if (r.sample.battery && (!data.sample || r.sample.seq !== data.sample.seq)) push(data.bat, r.sample.battery.percent)
@@ -404,9 +409,28 @@
     }).join('') + '</table>' + (known ? '' : '<div class="more">Energy impact appears after a few seconds</div>') + '</div>'
   }
 
+  function gpuChips(d) {
+    return [
+      chip('VRAM', d.memUsed !== null && d.memTotal ? Fmt.gib(d.memUsed) + ' / ' + Math.round(d.memTotal / 1073741824) + ' GB' : null),
+      chip('Temp', some(d.temp, function (v) { return Math.round(v) + '°C' })),
+      chip('Power', some(d.power, function (v) { return Math.round(v) + ' W' }))
+    ]
+  }
+
   function gpuBody(layout) {
     var g = data.sample.gpu
-    return head(Fmt.pct(g.utilization) + '<u> busy</u>', ['<span>' + esc(g.model || 'GPU') + '</span>']) + graph(layout, 'gpu', 'gpu', 2)
+    var devs = g.devices || []
+    var many = devs.length > 1
+    var html = head(Fmt.pct(g.utilization) + '<u> busy' + (many ? ' · avg of ' + devs.length : '') + '</u>', ['<span>' + esc(g.model || 'GPU') + '</span>'], devs.length === 1 ? gpuChips(devs[0]) : null) +
+      graph(layout, 'gpu', 'gpu', 2)
+    if (!many) return html
+    var sec = windowSec()
+    html += '<div class="cnote">Each GPU · 0–100% · ' + spanLabel(sec) + '</div><div class="gspark">'
+    devs.forEach(function (d, i) {
+      html += '<div class="gs"><div class="cs"><span class="cl">' + d.index + '</span><div class="grow">' + plot('gpu' + i, 'gpu', false, span(), true) + '</div><span class="cp num">' + Fmt.pct(d.utilization) + '</span></div>' +
+        '<div class="chips mut gm">' + gpuChips(d).join('') + '</div></div>'
+    })
+    return html + '</div>' + timeRow(sec)
   }
 
   function holdButton(pid, cls) {
@@ -521,7 +545,7 @@
     else if (view.seen.net) list.push(['net', '–', missing])
     if (s.disk) list.push(['disk', Fmt.diskSize(s.disk.used) + ' / ' + Fmt.diskSize(s.disk.total), function () { return diskBody(layout) }])
     else if (view.seen.disk) list.push(['disk', '–', missing])
-    if (s.gpu) list.push(['gpu', Fmt.pct(s.gpu.utilization), function () { return gpuBody(layout) }])
+    if (s.gpu) list.push(['gpu', s.gpu.devices && s.gpu.devices.length > 1 ? s.gpu.devices.map(function (d) { return Fmt.pct(d.utilization) }).join(' · ') : Fmt.pct(s.gpu.utilization), function () { return gpuBody(layout) }])
     else if (view.seen.gpu) list.push(['gpu', '–', missing])
     var b = s.battery
     list.push(['energy', b ? b.percent + '% · ' + esc(batteryStatus(b)) : '', function () { return energyBody(layout) }])

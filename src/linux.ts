@@ -15,7 +15,7 @@ import {
 } from './parse.ts'
 import { linuxBattery, parseDiskstatsOps, parsePasswd, parseProcIo, parseProcNetDevPackets, parseStatusUid, type Extra } from './details.ts'
 
-const SMI = ['--query-gpu=utilization.gpu,name', '--format=csv,noheader,nounits']
+const SMI = ['--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,name', '--format=csv,noheader,nounits']
 const NVIDIA_DISCOVERY_EVERY = 60_000
 
 export function createLinux(d: Deps, root = '', home = os.homedir()): Provider {

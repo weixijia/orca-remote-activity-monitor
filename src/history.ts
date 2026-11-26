@@ -1,6 +1,6 @@
 import type { Point } from './sampler.ts'
 
-type Sum = { seq: number; count: number; at: number; total: number; cores: number[]; coreCounts: number[]; mem: number; down: number; up: number; read: number; write: number; gpu: number }
+type Sum = { seq: number; count: number; at: number; total: number; cores: number[]; coreCounts: number[]; mem: number; down: number; up: number; read: number; write: number; gpu: number; gpus: number[]; gpuCounts: number[] }
 type Bucket = { key: number; sum: Sum }
 
 const SECOND = 1000
@@ -11,7 +11,7 @@ const MID_WIDTH = 10 * SECOND
 const OLD_WIDTH = 60 * SECOND
 
 function empty(): Sum {
-  return { seq: 0, count: 0, at: 0, total: 0, cores: [], coreCounts: [], mem: 0, down: 0, up: 0, read: 0, write: 0, gpu: 0 }
+  return { seq: 0, count: 0, at: 0, total: 0, cores: [], coreCounts: [], mem: 0, down: 0, up: 0, read: 0, write: 0, gpu: 0, gpus: [], gpuCounts: [] }
 }
 
 function addPoint(into: Sum, p: Point): void {
@@ -28,6 +28,10 @@ function addPoint(into: Sum, p: Point): void {
   p.cores.forEach((v, i) => {
     into.cores[i] = (into.cores[i] ?? 0) + v
     into.coreCounts[i] = (into.coreCounts[i] ?? 0) + 1
+  })
+  ;(p.gpus ?? []).forEach((v, i) => {
+    into.gpus[i] = (into.gpus[i] ?? 0) + v
+    into.gpuCounts[i] = (into.gpuCounts[i] ?? 0) + 1
   })
 }
 
@@ -46,6 +50,10 @@ function addSum(into: Sum, from: Sum): void {
     into.cores[i] = (into.cores[i] ?? 0) + v
     into.coreCounts[i] = (into.coreCounts[i] ?? 0) + from.coreCounts[i]
   })
+  from.gpus.forEach((v, i) => {
+    into.gpus[i] = (into.gpus[i] ?? 0) + v
+    into.gpuCounts[i] = (into.gpuCounts[i] ?? 0) + from.gpuCounts[i]
+  })
 }
 
 function mean(s: Sum): Point {
@@ -60,7 +68,8 @@ function mean(s: Sum): Point {
     up: s.up / n,
     read: s.read / n,
     write: s.write / n,
-    gpu: s.gpu / n
+    gpu: s.gpu / n,
+    gpus: s.gpus.map((v, i) => v / s.gpuCounts[i])
   }
 }
 

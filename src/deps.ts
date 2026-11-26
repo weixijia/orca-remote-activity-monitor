@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process'
 import { readFile, readdir, readlink } from 'node:fs/promises'
 import os from 'node:os'
-import type { Memory, Proc } from './parse.ts'
+import type { Gpu, Memory, Proc } from './parse.ts'
 import type { Battery, Extra, Pair } from './details.ts'
 
 export type RunOptions = { anyExit?: boolean }
@@ -20,7 +20,7 @@ export type Raw = {
   pressure: string | null
   net: { rx: number; tx: number; iface: string | null; name: string | null } | null
   disk: { read: number; write: number; devices: number } | null
-  gpu: { utilization: number; model: string } | null
+  gpu: Gpu | null
   packets?: Pair | null
   ops?: Pair | null
   battery?: Battery | null

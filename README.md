@@ -28,6 +28,7 @@ The host setting is checked before it reaches ssh (letters, digits and `._@:%+-`
 - **Remote only.** It always reads the configured SSH host, never the local machine. Install the original alongside it if you want both.
 - **Linux hosts.** The remote side uses the Linux provider (`/proc`, `/sys`, `nvidia-smi`).
 - **Disk** shows the remote user's home folder.
+- **Multiple NVIDIA GPUs** are shown one by one: the GPU tile lists each card's utilization, and the GPU page adds a graph per card with VRAM, temperature and power under it, below the average graph. (The original averages all cards into one number.)
 - **Quit** (× on a process row, and the Quit button in the health drawer) sends SIGTERM, or SIGKILL for Force quit, to the remote process as your SSH user. The identity check from the original still runs first (same name and start time), and the agent's own process and its SSH session cannot be quit.
 - **What is this?** tells your agent the process is on the remote host and how to reach it.
 - **Clean up is removed.** It launches an agent in a local workspace and judges processes by local paths, which doesn't carry over to another machine.

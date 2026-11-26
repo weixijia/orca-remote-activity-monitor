@@ -48,7 +48,9 @@ function gpuFixture(t) {
       await linux.read()
       // All fixture I/O resolves immediately; drain the background GPU refresh.
       await setImmediate()
-      return (await linux.read()).gpu
+      const gpu = (await linux.read()).gpu
+      // These tests are about when the GPU is polled; per-card details are covered in parse tests.
+      return gpu && { utilization: gpu.utilization, model: gpu.model }
     },
     pciLists() { return lists.filter((path) => path === pci).length },
     metadataReads() { return reads.filter((path) => /\/(vendor|class)$/.test(path)).length }

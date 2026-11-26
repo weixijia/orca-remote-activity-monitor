@@ -52,6 +52,10 @@ body {
 .cs .cl, .cs .cp { align-self: center; }
 .cs .cp { text-align: right; }
 .cs .grow { min-height: 8px; }
+.gspark { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; flex: 2; min-height: 0; }
+.gs { display: flex; flex-direction: column; gap: 2px; flex: 1; min-height: 0; }
+.gs .cs { min-height: 22px; }
+.gs .gm { padding-left: 24px; }
 .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; margin-top: 6px; font-size: calc(11px * var(--ts, 1)); }
 .legend span { display: flex; align-items: center; gap: 5px; min-width: 0; }
 .legend i { width: 7px; height: 7px; border-radius: 2px; flex: none; }

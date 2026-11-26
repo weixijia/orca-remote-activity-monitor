@@ -264,11 +264,47 @@ export function parsePsArgs(text: string): Map<number, string> {
   return out
 }
 
-export function parseNvidiaSmi(text: string): { utilization: number; model: string } | null {
+export type GpuDevice = {
+  index: number
+  utilization: number
+  model: string
+  memUsed: number | null
+  memTotal: number | null
+  temp: number | null
+  power: number | null
+}
+export type Gpu = { utilization: number; model: string; devices?: GpuDevice[] }
+
+const MIB = 1024 * 1024
+// nvidia-smi prints "[N/A]" or "[Not Supported]" for fields a card does not report.
+function smiNum(v: string | undefined): number | null {
+  if (v === undefined || !/^\d+(\.\d+)?$/.test(v)) return null
+  return Number(v)
+}
+
+// Rows from `nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,name`
+// (NVIDIA_QUERY), one per card. The older two-field form `utilization.gpu,name` is still read.
+export function parseNvidiaSmi(text: string): Gpu | null {
   const rows = text.trim().split('\n').map((line) => line.split(',').map((x) => x.trim())).filter((r) => r.length >= 2 && /^\d+$/.test(r[0]))
   if (!rows.length) return null
-  const avg = rows.reduce((a, r) => a + Number(r[0]), 0) / rows.length
-  return { utilization: avg, model: rows[0].slice(1).join(', ') }
+  const devices: GpuDevice[] = rows.map((r, index) => {
+    const full = r.length >= 6
+    const memUsed = full ? smiNum(r[1]) : null
+    const memTotal = full ? smiNum(r[2]) : null
+    return {
+      index,
+      utilization: Number(r[0]),
+      model: (full ? r.slice(5) : r.slice(1)).join(', '),
+      memUsed: memUsed === null ? null : memUsed * MIB,
+      memTotal: memTotal === null ? null : memTotal * MIB,
+      temp: full ? smiNum(r[3]) : null,
+      power: full ? smiNum(r[4]) : null
+    }
+  })
+  const avg = devices.reduce((a, g) => a + g.utilization, 0) / devices.length
+  const names = [...new Set(devices.map((g) => g.model))]
+  const model = devices.length === 1 ? names[0] : names.length === 1 ? devices.length + '× ' + names[0] : names.join(' + ')
+  return { utilization: avg, model, devices }
 }
 
 export function parseWindowsNetstat(text: string): Counters | null {
